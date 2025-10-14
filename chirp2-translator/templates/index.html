@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chirp 2 Live Transcription with Translation</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            opacity: 0.9;
+            font-size: 1em;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        select:hover {
+            border-color: #667eea;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-start {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-start:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-stop {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-stop:hover:not(:disabled) {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .btn-download, .btn-playback, .btn-speak {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-download:hover:not(:disabled), 
+        .btn-playback:hover:not(:disabled),
+        .btn-speak:hover:not(:disabled) {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+        }
+
+        .status {
+            padding: 15px 30px;
+            background: #e9ecef;
+            border-left: 4px solid #6c757d;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .status.active {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+
+        .transcription-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 400px;
+        }
+
+        .transcription-box {
+            padding: 30px;
+            border-right: 2px solid #e9ecef;
+        }
+
+        .transcription-box:last-child {
+            border-right: none;
+        }
+
+        .transcription-box h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: space-between;
+        }
+
+        .language-label {
+            font-size: 0.85em;
+            color: #6c757d;
+            font-weight: normal;
+        }
+
+        .transcription-content {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-size: 1.1em;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .interim {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .final {
+            color: #212529;
+        }
+
+        .timestamp-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        .recording-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #dc3545;
+            border-radius: 50%;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .empty-state {
+            color: #868e96;
+            font-style: italic;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .download-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        /* NEW: Voice gender buttons */
+        .voice-options {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .voice-btn {
+            padding: 8px 16px;
+            font-size: 0.9em;
+            border: 2px solid #dee2e6;
+            background: white;
+            color: #495057;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .voice-btn:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+
+        .voice-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        @media (max-width: 1024px) {
+            .transcription-area {
+                grid-template-columns: 1fr;
+            }
+            
+            .transcription-box {
+                border-right: none;
+                border-bottom: 2px solid #e9ecef;
+            }
+            
+            .transcription-box:last-child {
+                border-bottom: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .control-row {
+                flex-direction: column;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>üéôÔ∏è Chirp 2 Live Transcription</h1>
+            <p class="subtitle">Real-time speech recognition with AI translation and customizable voice playback</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-row">
+                <div class="control-group">
+                    <label for="source-language">Source Language:</label>
+                    <select id="source-language">
+                        <option value="en-US">English (US)</option>
+                        <option value="en-GB">English (UK)</option>
+                        <option value="es-ES">Spanish (Spain)</option>
+                        <option value="es-MX">Spanish (Mexico)</option>
+                        <option value="fr-FR">French</option>
+                        <option value="de-DE">German</option>
+                        <option value="it-IT">Italian</option>
+                        <option value="pt-BR">Portuguese (Brazil)</option>
+                        <option value="ja-JP">Japanese</option>
+                        <option value="ko-KR">Korean</option>
+                        <option value="zh-CN">Chinese (Simplified)</option>
+                        <option value="ar-AE">Arabic</option>
+                        <option value="da-DK">Danish</option>
+                        <option value="el-GR">Greek</option>
+                        <option value="id-ID">Indonesian</option>
+                        <option value="pl-PL">Polish</option>
+                        <option value="th-TH">Thai</option>
+                        <option value="tr-TR">Turkish</option>
+                        <option value="fil-PH">Filipino</option>
+                        <option value="ceb-PH">Cebuano</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="target-language">Translate To:</label>
+                    <select id="target-language">
+                        <option value="Spanish">Spanish</option>
+                        <option value="English">English</option>
+                        <option value="French">French</option>
+                        <option value="German">German</option>
+                        <option value="Italian">Italian</option>
+                        <option value="Portuguese">Portuguese</option>
+                        <option value="Japanese">Japanese</option>
+                        <option value="Korean">Korean</option>
+                        <option value="Chinese">Chinese</option>
+                        <option value="Arabic">Arabic</option>
+                        <option value="Danish">Danish</option>
+                        <option value="Greek">Greek</option>
+                        <option value="Indonesian">Indonesian</option>
+                        <option value="Polish">Polish</option>
+                        <option value="Thai">Thai</option>
+                        <option value="Turkish">Turkish</option>
+                        <option value="Filipino">Filipino</option>
+                        <option value="Cebuano">Cebuano</option>
+                    </select>
+                </div>
+
+                <!-- NEW: Voice selection -->
+                <div class="control-group">
+                    <label>Voice Gender:</label>
+                    <div class="voice-options">
+                        <button type="button" class="voice-btn" data-voice="MALE">üë® Male</button>
+                        <button type="button" class="voice-btn active" data-voice="NEUTRAL">üë§ Neutral</button>
+                        <button type="button" class="voice-btn" data-voice="FEMALE">üë© Female</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Options:</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="show-timestamps" />
+                        <label for="show-timestamps">Show Chirp Timestamps</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button id="start-btn" class="btn-start">
+                    <span>‚ñ∂</span> Start Recording
+                </button>
+                <button id="stop-btn" class="btn-stop" disabled>
+                    <span>‚èπ</span> Stop Recording
+                </button>
+                <button id="playback-btn" class="btn-playback" disabled>
+                    <span>üîä</span> Play Recording
+                </button>
+                <button id="download-audio-btn" class="btn-download" disabled>
+                    <span>üíæ</span> Download Audio
+                </button>
+                <button id="download-text-btn" class="btn-download" disabled>
+                    <span>üìÑ</span> Download Text
+                </button>
+            </div>
+        </div>
+
+        <div id="status" class="status">Ready to start</div>
+
+        <div class="transcription-area">
+            <div class="transcription-box">
+                <h3>
+                    <div class="header-controls">
+                        <span>üìù</span> 
+                        <span>Original Text</span>
+                        <span id="source-lang-label" class="language-label">(English US)</span>
+                        <span id="recording-indicator" class="recording-indicator" style="display: none;"></span>
+                    </div>
+                </h3>
+                <div id="original-text" class="transcription-content">
+                    <div class="empty-state">Click "Start Recording" and speak to begin transcription...</div>
+                </div>
+            </div>
+
+            <div class="transcription-box">
+                <h3>
+                    <div class="header-controls">
+                        <span>üåç</span> 
+                        <span>Translation</span>
+                        <span id="target-lang-label" class="language-label">(Spanish)</span>
+                    </div>
+                    <div class="download-controls">
+                        <button id="speak-translation-btn" class="btn-speak btn-small" disabled>
+                            <span>üîä</span> Speak
+                        </button>
+                        <button id="download-translation-btn" class="btn-download btn-small" disabled>
+                            <span>üìÑ</span> Text
+                        </button>
+                        <button id="download-tts-btn" class="btn-download btn-small" disabled>
+                            <span>üéµ</span> MP3
+                        </button>
+                    </div>
+                </h3>
+                <div id="translated-text" class="transcription-content">
+                    <div class="empty-state">Translation will appear here...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="playback-audio" style="display: none;"></audio>
+    <audio id="tts-audio" style="display: none;"></audio>
+
+    <script>
+        const socket = io();
+        let audioContext = null;
+        let sourceNode = null;
+        let processorNode = null;
+        let isRecording = false;
+        let sessionId = null;
+        let audioChunks = [];
+        let currentStream = null;
+        let selectedVoiceGender = 'NEUTRAL'; // NEW: Track selected voice
+
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const playbackBtn = document.getElementById('playback-btn');
+        const downloadAudioBtn = document.getElementById('download-audio-btn');
+        const downloadTextBtn = document.getElementById('download-text-btn');
+        const speakTranslationBtn = document.getElementById('speak-translation-btn');
+        const downloadTranslationBtn = document.getElementById('download-translation-btn');
+        const downloadTtsBtn = document.getElementById('download-tts-btn');
+        const sourceLanguageSelect = document.getElementById('source-language');
+        const targetLanguageSelect = document.getElementById('target-language');
+        const showTimestampsCheckbox = document.getElementById('show-timestamps');
+        const statusDiv = document.getElementById('status');
+        const originalTextDiv = document.getElementById('original-text');
+        const translatedTextDiv = document.getElementById('translated-text');
+        const sourceLangLabel = document.getElementById('source-lang-label');
+        const targetLangLabel = document.getElementById('target-lang-label');
+        const recordingIndicator = document.getElementById('recording-indicator');
+        const playbackAudio = document.getElementById('playback-audio');
+        const ttsAudio = document.getElementById('tts-audio');
+        const voiceButtons = document.querySelectorAll('.voice-btn');
+
+        let originalTextAccumulator = '';
+        let translatedTextAccumulator = '';
+
+        const LANGUAGE_NAMES = {
+            'ar-AE': 'Arabic',
+            'zh-CN': 'Chinese',
+            'da-DK': 'Danish',
+            'en-GB': 'English UK',
+            'en-US': 'English US',
+            'fr-FR': 'French',
+            'de-DE': 'German',
+            'el-GR': 'Greek',
+            'id-ID': 'Indonesian',
+            'it-IT': 'Italian',
+            'ja-JP': 'Japanese',
+            'ko-KR': 'Korean',
+            'pl-PL': 'Polish',
+            'pt-BR': 'Portuguese',
+            'es-MX': 'Spanish MX',
+            'es-ES': 'Spanish ES',
+            'th-TH': 'Thai',
+            'tr-TR': 'Turkish',
+            'fil-PH': 'Filipino',
+            'ceb-PH': 'Cebuano'
+        };
+
+        // NEW: Voice button handling
+        voiceButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                voiceButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedVoiceGender = btn.dataset.voice;
+                console.log('Voice gender selected:', selectedVoiceGender);
+            });
+        });
+
+        function formatTimestamp(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 10);
+            return `${mins}:${secs.toString().padStart(2, '0')}.${ms}`;
+        }
+
+        function updateLanguageLabels() {
+            const sourceLang = LANGUAGE_NAMES[sourceLanguageSelect.value] || sourceLanguageSelect.value;
+            const targetLang = targetLanguageSelect.value;
+            
+            sourceLangLabel.textContent = `(${sourceLang})`;
+            targetLangLabel.textContent = `(${targetLang})`;
+        }
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            updateStatus('Connected to server - Ready to start', 'active');
+        });
+
+        socket.on('connected', (data) => {
+            sessionId = data.session_id;
+            console.log('Session ID:', sessionId);
+        });
+
+        socket.on('session_started', (data) => {
+            console.log('Session started:', data);
+            updateStatus(`Recording: ${data.source_language} ‚Üí ${data.target_language} (${data.voice_gender} voice)`, 'active');
+            recordingIndicator.style.display = 'inline-block';
+            
+            originalTextAccumulator = '';
+            translatedTextAccumulator = '';
+            originalTextDiv.innerHTML = '<div class="empty-state" style="color: #28a745;">üé§ Listening... Speak now!</div>';
+            translatedTextDiv.innerHTML = '<div class="empty-state">Waiting for speech...</div>';
+        });
+
+        socket.on('transcription', (data) => {
+            console.log('Transcription received:', data);
+            
+            if (data.is_final) {
+                const timestamp = new Date(data.timestamp).toLocaleTimeString();
+                const confidence = data.confidence ? ` (${Math.round(data.confidence * 100)}%)` : '';
+                
+                let timestampBadge = '';
+                if (data.chirp_timestamp !== undefined) {
+                    timestampBadge = `<span class="timestamp-badge">${formatTimestamp(data.chirp_timestamp)}</span>`;
+                }
+                
+                if (originalTextAccumulator === '') {
+                    originalTextDiv.innerHTML = '';
+                    translatedTextDiv.innerHTML = '';
+                }
+                
+                originalTextAccumulator += data.original + ' ';
+                const originalEntry = `<div class="timestamp">${timestamp}</div><div class="final">${timestampBadge}${data.original}<span class="confidence">${confidence}</span></div><br>`;
+                originalTextDiv.innerHTML += originalEntry;
+                
+                if (data.translation) {
+                    translatedTextAccumulator += data.translation + ' ';
+                    const translationEntry = `<div class="timestamp">${timestamp}</div><div class="final">${timestampBadge}${data.translation}</div><br>`;
+                    translatedTextDiv.innerHTML += translationEntry;
+                    
+                    speakTranslationBtn.disabled = false;
+                    downloadTranslationBtn.disabled = false;
+                }
+                
+                originalTextDiv.scrollTop = originalTextDiv.scrollHeight;
+                translatedTextDiv.scrollTop = translatedTextDiv.scrollHeight;
+                
+                const interimDiv = document.getElementById('interim-result');
+                if (interimDiv) {
+                    interimDiv.remove();
+                }
+            } else {
+                if (originalTextAccumulator === '') {
+                    originalTextDiv.innerHTML = '';
+                }
+                
+                let interimDiv = document.getElementById('interim-result');
+                if (!interimDiv) {
+                    interimDiv = document.createElement('div');
+                    interimDiv.id = 'interim-result';
+                    originalTextDiv.appendChild(interimDiv);
+                }
+                interimDiv.innerHTML = `<div class="interim">${data.original}...</div>`;
+                originalTextDiv.scrollTop = originalTextDiv.scrollHeight;
+            }
+        });
+
+        socket.on('tts_audio', (data) => {
+            console.log('Received TTS audio (voice:', data.voice_gender + ')');
+            try {
+                const audioData = atob(data.audio);
+                const arrayBuffer = new ArrayBuffer(audioData.length);
+                const view = new Uint8Array(arrayBuffer);
+                for (let i = 0; i < audioData.length; i++) {
+                    view[i] = audioData.charCodeAt(i);
+                }
+                const blob = new Blob([arrayBuffer], { type: 'audio/mp3' });
+                const url = URL.createObjectURL(blob);
+                ttsAudio.src = url;
+                ttsAudio.play()
+                    .then(() => {
+                        console.log('TTS playback started');
+                        downloadTtsBtn.disabled = false;
+                    })
+                    .catch(err => console.error('TTS playback error:', err));
+            } catch (error) {
+                console.error('Error processing TTS audio:', error);
+            }
+        });
+
+        socket.on('session_stopped', () => {
+            updateStatus('Recording stopped', 'normal');
+            recordingIndicator.style.display = 'none';
+            playbackBtn.disabled = audioChunks.length === 0;
+            downloadAudioBtn.disabled = audioChunks.length === 0;
+            downloadTextBtn.disabled = originalTextAccumulator.trim() === '';
+            
+            if (originalTextAccumulator.trim() === '') {
+                originalTextDiv.innerHTML = '<div class="empty-state">No speech detected. Please try again.</div>';
+                translatedTextDiv.innerHTML = '<div class="empty-state">No translation available.</div>';
+                speakTranslationBtn.disabled = true;
+                downloadTranslationBtn.disabled = true;
+                downloadTtsBtn.disabled = true;
+            }
+        });
+
+        socket.on('error', (data) => {
+            console.error('Error:', data.message);
+            updateStatus(`Error: ${data.message}`, 'error');
+            stopRecording();
+        });
+
+        function updateStatus(message, type = 'normal') {
+            statusDiv.textContent = message;
+            statusDiv.className = 'status';
+            if (type === 'active') statusDiv.classList.add('active');
+            if (type === 'error') statusDiv.classList.add('error');
+        }
+
+        startBtn.addEventListener('click', async () => {
+            try {
+                updateStatus('Requesting microphone access...', 'normal');
+                
+                currentStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        channelCount: 1,
+                        sampleRate: 16000,
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    } 
+                });
+
+                updateStatus('Microphone access granted, initializing...', 'active');
+
+                audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                    sampleRate: 16000
+                });
+
+                sourceNode = audioContext.createMediaStreamSource(currentStream);
+                processorNode = audioContext.createScriptProcessor(4096, 1, 1);
+                
+                processorNode.onaudioprocess = (e) => {
+                    if (!isRecording) return;
+                    
+                    const inputData = e.inputBuffer.getChannelData(0);
+                    const pcm16 = new Int16Array(inputData.length);
+                    for (let i = 0; i < inputData.length; i++) {
+                        const s = Math.max(-1, Math.min(1, inputData[i]));
+                        pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                    }
+                    
+                    audioChunks.push(pcm16.buffer.slice(0));
+                    const base64Audio = arrayBufferToBase64(pcm16.buffer);
+                    socket.emit('audio_data', { audio: base64Audio });
+                };
+
+                sourceNode.connect(processorNode);
+                processorNode.connect(audioContext.destination);
+
+                audioChunks = [];
+                isRecording = true;
+                
+                // NEW: Send voice gender preference
+                socket.emit('start_session', {
+                    source_language: sourceLanguageSelect.value,
+                    target_language: targetLanguageSelect.value,
+                    show_timestamps: showTimestampsCheckbox.checked,
+                    voice_gender: selectedVoiceGender
+                });
+
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                sourceLanguageSelect.disabled = true;
+                targetLanguageSelect.disabled = true;
+                showTimestampsCheckbox.disabled = true;
+                voiceButtons.forEach(btn => btn.disabled = true);
+                playbackBtn.disabled = true;
+                downloadAudioBtn.disabled = true;
+                downloadTextBtn.disabled = true;
+                speakTranslationBtn.disabled = true;
+                downloadTranslationBtn.disabled = true;
+                downloadTtsBtn.disabled = true;
+
+            } catch (error) {
+                console.error('Error starting recording:', error);
+                updateStatus(`Error: ${error.message}. Please allow microphone access.`, 'error');
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            stopRecording();
+        });
+
+        function stopRecording() {
+            isRecording = false;
+            socket.emit('stop_session');
+
+            if (processorNode) {
+                processorNode.disconnect();
+                processorNode = null;
+            }
+
+            if (sourceNode) {
+                sourceNode.disconnect();
+                sourceNode = null;
+            }
+
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            sourceLanguageSelect.disabled = false;
+            targetLanguageSelect.disabled = false;
+            showTimestampsCheckbox.disabled = false;
+            voiceButtons.forEach(btn => btn.disabled = false);
+        }
+
+        speakTranslationBtn.addEventListener('click', () => {
+            if (translatedTextAccumulator.trim()) {
+                console.log('Requesting TTS for:', translatedTextAccumulator.trim(), 'voice:', selectedVoiceGender);
+                // NEW: Send voice gender with TTS request
+                socket.emit('request_tts', {
+                    text: translatedTextAccumulator.trim(),
+                    target_language: targetLanguageSelect.value,
+                    voice_gender: selectedVoiceGender
+                });
+            }
+        });
+
+        playbackBtn.addEventListener('click', () => {
+            if (audioChunks.length === 0) {
+                alert('No audio to play back');
+                return;
+            }
+
+            const wavBlob = createWavBlob(audioChunks);
+            const url = URL.createObjectURL(wavBlob);
+            playbackAudio.src = url;
+            playbackAudio.play();
+        });
+
+        downloadAudioBtn.addEventListener('click', () => {
+            window.location.href = `/api/download/${sessionId}/audio`;
+        });
+
+        downloadTextBtn.addEventListener('click', () => {
+            window.location.href = `/api/download/${sessionId}/text`;
+        });
+
+        downloadTranslationBtn.addEventListener('click', () => {
+            window.location.href = `/api/download/${sessionId}/translation`;
+        });
+
+        downloadTtsBtn.addEventListener('click', () => {
+            window.location.href = `/api/download/${sessionId}/tts`;
+        });
+
+        sourceLanguageSelect.addEventListener('change', updateLanguageLabels);
+        targetLanguageSelect.addEventListener('change', updateLanguageLabels);
+
+        function arrayBufferToBase64(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+        }
+
+        function createWavBlob(chunks) {
+            const totalLength = chunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
+            const combined = new Int16Array(totalLength / 2);
+            let offset = 0;
+            
+            for (const chunk of chunks) {
+                combined.set(new Int16Array(chunk), offset);
+                offset += chunk.byteLength / 2;
+            }
+
+            const sampleRate = 16000;
+            const numChannels = 1;
+            const bitsPerSample = 16;
+            const byteRate = sampleRate * numChannels * bitsPerSample / 8;
+            const blockAlign = numChannels * bitsPerSample / 8;
+            const dataSize = combined.byteLength;
+            
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + dataSize, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, byteRate, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitsPerSample, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, dataSize, true);
+
+            for (let i = 0; i < combined.length; i++) {
+                view.setInt16(44 + i * 2, combined[i], true);
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        updateLanguageLabels();
+        
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            updateStatus('Error: Your browser does not support microphone access', 'error');
+            startBtn.disabled = true;
+        }
+    </script>
+</body>
+</html>
+
