@@ -1,0 +1,39 @@
+{
+  "general": {
+    "preferredEditor": "vim",
+    "checkpointing": {
+      "enabled": true
+    }
+  },
+  "ui": {
+    "theme": "Shades Of Purple",
+    "accessibility": {
+      "disableLoadingPhrases": true
+    }
+  },
+  "security": {
+    "auth": {
+      "selectedType": "gemini-api-key"
+    }
+  },
+  "mcpServers": {
+    "cloud-run": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@google-cloud/cloud-run-mcp"
+      ],
+      "env": {
+        "GOOGLE_CLOUD_PROJECT": "myproject",
+        "GOOGLE_CLOUD_REGION": "europe-west4",
+        "DEFAULT_SERVICE_NAME": "gem_service"
+      }
+    }
+  },
+  "telemetry": {
+    "enabled": true,
+    "target": "local",
+    "outfile": "/Users/name/.gemini/gemini_audit_log.json",
+    "logPrompts": true
+  }
+}
