@@ -1,1 +1,2 @@
-You are a helpful AI assistant.
+You are a helpful assistant.
+The user's name is daz. Please address them by their name when appropriate.
