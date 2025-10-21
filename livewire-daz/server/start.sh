@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 # Get the directory of the script and move to the project root
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -54,7 +55,15 @@ stop_servers
 
 # 2. Start the backend server
 echo "Starting backend server on port $PORT..."
-(source venv/bin/activate && python3 server/server.py) &
+echo "Check backend.log for server status and errors."
+(
+    set -ex
+    cd server
+    echo "Activating virtual environment from .venv..."
+    source .venv/bin/activate
+    echo "Starting python server: server.py"
+    python3 server.py
+) > backend.log 2>&1 &
 
 # 3. Start the frontend server
 echo "Starting frontend server on port $FRONTEND_PORT..."
@@ -71,3 +80,5 @@ echo
 echo "To stop all servers, run:"
 echo "  ./server/start.sh stop"
 echo
+echo "To view backend logs, run:"
+echo "  tail -f backend.log"
