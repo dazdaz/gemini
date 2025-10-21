@@ -77,8 +77,7 @@ class ApiConfig:
             )
             logger.warning(f"Weather API disabled: {str(e)}")
             self.weather_api_key = None
-            if not self.weather_api_key:
-                raise ConfigurationError("OpenWeather API key not available")
+            # [FIXED] Removed the 'if not self.weather_api_key' check that raised the error
 
         if not self.use_vertex:
             try:
