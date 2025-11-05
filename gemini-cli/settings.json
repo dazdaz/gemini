@@ -24,7 +24,7 @@
         "@google-cloud/cloud-run-mcp"
       ],
       "env": {
-        "GOOGLE_CLOUD_PROJECT": "myproject",
+        "GOOGLE_CLOUD_PROJECT": "my-playground",
         "GOOGLE_CLOUD_REGION": "europe-west4",
         "DEFAULT_SERVICE_NAME": "gem_service"
       }
@@ -33,7 +33,8 @@
   "telemetry": {
     "enabled": true,
     "target": "local",
-    "outfile": "/Users/name/.gemini/gemini_audit_log.json",
+    "outfile": "/Users/me/.gemini/gemini_audit_log.json",
     "logPrompts": true
-  }
+  },
+  "useWriteTodos": true
 }
