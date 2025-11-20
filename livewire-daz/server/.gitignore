@@ -1,2 +1,4 @@
 # Playwright
 playwright_user_data/
+# Environment variables
+.env
