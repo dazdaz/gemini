@@ -50,7 +50,7 @@ async def create_gemini_session():
                 vertexai=True,
                 location=location,
                 project=project_id,
-                # http_options={'api_version': 'v1beta'}
+                http_options={'api_version': 'v1beta1'}
             )
             logger.info(f"Vertex AI client initialized with client: {client}")
         else:
