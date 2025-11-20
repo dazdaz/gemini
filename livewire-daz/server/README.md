@@ -1,10 +1,10 @@
-# Project Livewire - Server Component
+# Gemini Multimodal Demo - Server Component
 
-This README provides detailed information about the server-side component of Project Livewire. This server is a Python-based WebSocket application built using `websockets` and `google-genai` libraries. It acts as a proxy and tool handler for Gemini 2.0 Flash (experimental) model and manages real-time communication between the client and the Gemini API.
+This README provides detailed information about the server-side component of Gemini Multimodal Demo. This server is a Python-based WebSocket application built using `websockets` and `google-genai` libraries. It acts as a proxy and tool handler for Gemini 2.0 Flash (experimental) model and manages real-time communication between the client and the Gemini API.
 
 ## Overview
 
-The server component is the core backend logic of Project Livewire and is responsible for:
+The server component is the core backend logic of Gemini Multimodal Demo and is responsible for:
 
 - **WebSocket Communication:** Establishes and manages bidirectional, real-time communication with client applications (frontend UI) using WebSockets.
 - **Gemini API Interaction:**  Connects to and manages sessions with the Gemini Multimodal Live API to process user inputs (text, audio, video) and receive AI-generated responses.

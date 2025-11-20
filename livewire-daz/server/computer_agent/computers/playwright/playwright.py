@@ -141,8 +141,18 @@ class PlaywrightComputer(Computer):
             self._browser.close()
         self._playwright.stop()
 
-        
+    @property
+    def is_alive(self) -> bool:
+        try:
+            return self._page and not self._page.is_closed()
+        except Exception:
+            return False
+
     def open_web_browser(self) -> EnvState:
+        try:
+            self._page.bring_to_front()
+        except Exception:
+            pass
         return self.current_state()
 
     def click_at(self, x: int, y: int):

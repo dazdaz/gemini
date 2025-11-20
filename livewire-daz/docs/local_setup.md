@@ -1,6 +1,6 @@
-# Project Livewire - Local Setup Guide
+# Gemini Multimodal Demo - Local Setup Guide
 
-This guide provides detailed instructions for setting up and running Project Livewire on your local machine for development and testing.
+This guide provides detailed instructions for setting up and running Gemini Multimodal Demo on your local machine for development and testing.
 
 ## Prerequisites
 

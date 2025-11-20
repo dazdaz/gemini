@@ -1,6 +1,6 @@
-# Project Livewire: Step-by-Step Instructions
+# Gemini Multimodal Demo: Step-by-Step Instructions
 
-This guide provides clear, step-by-step instructions on how to set up and run the Project Livewire application.
+This guide provides clear, step-by-step instructions on how to set up and run the Gemini Multimodal Demo application.
 
 ## Prerequisites
 

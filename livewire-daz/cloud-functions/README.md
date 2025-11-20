@@ -1,6 +1,6 @@
-# Cloud Function Tools for Project Livewire
+# Cloud Function Tools for Gemini Multimodal Demo
 
-This directory contains Google Cloud Functions that provide tool functionalities for the Project Livewire application. These functions are designed to be called by the backend server to extend the capabilities of the Gemini AI model, such as providing weather information and accessing calendars.
+This directory contains Google Cloud Functions that provide tool functionalities for the Gemini Multimodal Demo application. These functions are designed to be called by the backend server to extend the capabilities of the Gemini AI model, such as providing weather information and accessing calendars.
 
 ## Tools Overview
 

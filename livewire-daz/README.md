@@ -1,8 +1,8 @@
-# Project Livewire 
+# Gemini Multimodal Demo
 
-**Talk to AI like never before! Project Livewire is a real-time, multimodal chat application showcasing the power of Gemini 2.0 Flash (experimental) Live API.**
+**Talk to AI like never before! Gemini Multimodal Demo is a real-time, multimodal chat application showcasing the power of Gemini 2.0 Flash (experimental) Live API.**
 
-Think "Star Trek computer" interaction – speak naturally, show your webcam, share your screen, and get instant, streamed audio responses. Livewire brings this futuristic experience to your devices today.
+Think "Star Trek computer" interaction – speak naturally, show your webcam, share your screen, and get instant, streamed audio responses. Gemini Multimodal Demo brings this futuristic experience to your devices today.
 
 This project builds upon the concepts from the [Gemini Multimodal Live API Developer Guide](https://github.com/heiko-hotz/gemini-multimodal-live-dev-guide) with a focus on a more production-ready setup and enhanced features.
 
@@ -105,7 +105,7 @@ This uses Cloud Build to containerize and deploy the client & server. For more d
 
 ## 🏗️ Architecture Overview
 
-Project Livewire consists of:
+Gemini Multimodal Demo consists of:
 
 1.  **Client (`client/`):** Vanilla JS frontend handling UI, media capture, and WebSocket connection. ([Details](./client/README.md))
 2.  **Server (`server/`):** Python WebSocket server proxying to Gemini, managing sessions, and calling tools. ([Details](./server/README.md))

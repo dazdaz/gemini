@@ -1,6 +1,6 @@
-# Project Livewire - Google Cloud Run Deployment Guide
+# Gemini Multimodal Demo - Google Cloud Run Deployment Guide
 
-This guide provides step-by-step instructions for deploying the Project Livewire client and server components as containerized services on Google Cloud Run. This setup is recommended for a scalable and managed production-like environment.
+This guide provides step-by-step instructions for deploying the Gemini Multimodal Demo client and server components as containerized services on Google Cloud Run. This setup is recommended for a scalable and managed production-like environment.
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ This guide provides step-by-step instructions for deploying the Project Livewire
 4.  **Deployed Cloud Functions:** The backend server relies on Cloud Functions for tool integration (weather, calendar).
     *   Deploy these functions first by following the **[Cloud Functions Setup Guide](../cloud-functions/README.md)**.
     *   You do *not* need the function URLs in an `.env` file for Cloud Run deployment if you configure them via Secret Manager or pass them during backend deployment (though storing them in secrets is common).
-5.  **Git Repository:** You should have the Project Livewire code cloned locally.
+5.  **Git Repository:** You should have the Gemini Multimodal Demo code cloned locally.
 
 ## Setup Steps
 
@@ -39,7 +39,7 @@ export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value project)
 
 # Create the service account
 gcloud iam service-accounts create ${BACKEND_SA_NAME} \
-    --description="Service account for Project Livewire backend Cloud Run service" \
+    --description="Service account for Gemini Multimodal Demo backend Cloud Run service" \
     --display-name="Livewire Backend SA"
 
 # Grant Secret Manager access to the service account
@@ -156,7 +156,7 @@ echo "Frontend URL: ${FRONTEND_URL}"
 
 ### 7. Access the Application
 
-Open the `FRONTEND_URL` in your web browser to use the deployed Project Livewire application.
+Open the `FRONTEND_URL` in your web browser to use the deployed Gemini Multimodal Demo application.
 
 ## Troubleshooting
 

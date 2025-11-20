@@ -1,32 +1,63 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
 body {
     font-family: Arial, sans-serif;
-    max-width: 800px;
+}
+
+.app-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 1000px;
     margin: 0 auto;
     padding: 20px;
-  }
-  
-  .header-section {
+    box-sizing: border-box;
+}
+
+.container {
+    flex-shrink: 0;
+    margin-bottom: 20px;
+}
+
+.container h1 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.container p {
+    margin: 0;
+    color: #666;
+}
+
+.header-section {
     padding: 20px;
     margin-bottom: 30px;
     background-color: #f5f5f5;
     border-bottom: 1px solid #ddd;
-  }
-  
-  .header-section h1 {
+}
+
+.header-section h1 {
     margin-top: 0;
     color: #333;
-  }
-  
-  .header-section p {
+}
+
+.header-section p {
     margin-bottom: 0;
     color: #666;
-  }
-  
-  .input-container {
-    margin: 20px;
+}
+
+.input-container {
+    margin: 0 0 20px 0;
     display: flex;
     gap: 10px;
-  }
+    flex-shrink: 0;
+}
   
   .action-button {
     padding: 8px 16px;
@@ -44,11 +75,15 @@ body {
   .video-container {
     width: 100%;
     max-width: 640px;
-    margin: 20px auto;
+    margin: 0 auto 20px auto;
+    flex-shrink: 0;
+    min-height: 0; /* Allow shrinking if needed */
   }
   
   #videoPreview {
     width: 100%;
+    max-height: 30vh; /* Limit video height */
+    object-fit: contain;
     border-radius: 8px;
   }
   
@@ -57,10 +92,11 @@ body {
   }
   
   #output {
-    margin: 20px;
+    margin: 0;
     border: 1px solid #ddd;
     padding: 15px;
-    height: 700px;
+    flex: 1;
+    min-height: 0; /* Crucial for nested flex scrolling */
     overflow-y: auto;
     background-color: #fafafa;
     border-radius: 5px;

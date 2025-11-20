@@ -35,9 +35,9 @@ def run_computer_agent_task(query: str) -> dict:
 
     try:
         agent_stop_event.clear()
-        # If the browser isn't open yet, create and initialize it.
-        if browser_env is None:
-            print("No existing browser found. Creating a new persistent instance...")
+        # If the browser isn't open yet or is dead, create and initialize it.
+        if browser_env is None or not browser_env.is_alive:
+            print("No existing browser found or browser is dead. Creating a new persistent instance...")
             USER_DATA_DIR = os.path.join(os.path.dirname(__file__), 'playwright_user_data')
             os.makedirs(USER_DATA_DIR, exist_ok=True)
 

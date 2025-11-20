@@ -39,8 +39,17 @@ async def run_and_log_task(coro, query: str, genai_session: Any):
     global background_task
     try:
         logger.info(f"Background task for '{query}' is now running.")
+        
+        # Log task start to file
+        with open("backend.log", "a") as f:
+            f.write(f"Task Started: {query}\n")
+            
         result = await coro
         logger.info(f"Background task for '{query}' finished with result: {result}")
+
+        # Log task completion to file
+        with open("backend.log", "a") as f:
+            f.write(f"Task Finished: {query} - Result: {result}\n")
 
         if result and result.get("status") == "success":
             summary = result.get("summary", "The task is complete.")
@@ -50,9 +59,13 @@ async def run_and_log_task(coro, query: str, genai_session: Any):
 
     except asyncio.CancelledError:
         logger.warning(f"Background task for '{query}' was cancelled.")
+        with open("backend.log", "a") as f:
+            f.write(f"Task Cancelled: {query}\n")
         await genai_session.send(input="The task has been cancelled.", end_of_turn=True)
     except Exception as e:
         logger.error(f"Background task for '{query}' failed with an exception: {e}")
+        with open("backend.log", "a") as f:
+            f.write(f"Task Failed: {query} - Error: {e}\n")
         await genai_session.send(input="An error occurred during the task.", end_of_turn=True)
     finally:
         logger.info(f"Cleaning up background task for '{query}'.")
