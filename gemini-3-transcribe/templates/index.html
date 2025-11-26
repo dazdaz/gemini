@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Transcribe - AI Audio Transcription</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        select {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .model-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 6px;
+        }
+
+        .model-cost {
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .options-section {
+            margin-bottom: 25px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        button {
+            flex: 1;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            box-shadow: 0 10px 30px rgba(56, 239, 125, 0.4);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e0e0e0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .progress-status {
+            color: #667eea;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .result {
+            display: none;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        .result-section {
+            margin-bottom: 25px;
+        }
+
+        .result-section h3 {
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-section h3 .icon {
+            font-size: 1.2em;
+        }
+
+        .result-text {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .copy-btn, .download-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+
+        .copy-btn:hover, .download-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .download-btn {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .download-btn:hover {
+            background: #5a6fd6;
+        }
+
+        .download-section {
+            background: #f0f4ff;
+            border: 1px solid #d0d8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 25px;
+        }
+
+        .download-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .error {
+            display: none;
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c00;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .video-title {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .video-info {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-item .icon {
+            font-size: 1.1em;
+        }
+
+        .info-label {
+            color: #666;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .cost-value {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
+        footer a {
+            color: white;
+        }
+
+        /* Audio only result styling */
+        .audio-result {
+            display: none;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .audio-result.active {
+            display: block;
+        }
+
+        .audio-result .download-section {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🎬 Gemini Transcribe</h1>
+            <p class="subtitle">AI-powered audio transcription using Google Gemini</p>
+
+            <form id="transcribeForm">
+                <div class="form-group">
+                    <label for="youtubeUrl">YouTube URL</label>
+                    <input 
+                        type="text" 
+                        id="youtubeUrl" 
+                        name="youtube_url" 
+                        placeholder="https://www.youtube.com/watch?v=..." 
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="modelSelect">Model</label>
+                    <select id="modelSelect" name="model">
+                        {% for model_id, model_info in models.items() %}
+                        <option value="{{ model_id }}" {% if model_id == default_model %}selected{% endif %}>
+                            {{ model_info.name }} - ~${{ "%.2f"|format(model_info.price_audio_per_second * 3600) }}/hour
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <p class="model-info">
+                        💡 <span class="model-cost">Gemini 2.5 Flash</span> is the most cost-effective option for most transcriptions
+                    </p>
+                </div>
+
+                <div class="options-section">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="generateSummary" name="generate_summary">
+                        <label for="generateSummary">Generate a summary</label>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" id="submitBtn">
+                        📝 Transcribe Video
+                    </button>
+                    <button type="button" id="saveAudioBtn" class="btn-secondary">
+                        🎵 Save MP3 Only
+                    </button>
+                </div>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p class="loading-text">Processing your request...</p>
+                <p class="progress-status" id="progressStatus">Downloading video audio...</p>
+            </div>
+
+            <div class="error" id="error"></div>
+
+            <!-- Audio only result -->
+            <div class="audio-result" id="audioResult">
+                <p class="video-title" id="audioVideoTitle"></p>
+                <div class="download-section">
+                    <h3><span class="icon">💾</span> Audio Downloaded</h3>
+                    <div class="download-buttons">
+                        <button class="download-btn" id="audioOnlyDownloadBtn">
+                            🎵 Download Audio (.mp3)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transcription result -->
+            <div class="result" id="result">
+                <p class="video-title" id="videoTitle"></p>
+                
+                <div class="video-info" id="videoInfo">
+                    <div class="info-item">
+                        <span class="icon">🤖</span>
+                        <span class="info-label">Model:</span>
+                        <span class="info-value" id="modelUsed">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="icon">⏱️</span>
+                        <span class="info-label">Duration:</span>
+                        <span class="info-value" id="audioDuration">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="icon">💰</span>
+                        <span class="info-label">Est. Cost:</span>
+                        <span class="cost-value" id="estimatedCost">-</span>
+                    </div>
+                </div>
+
+                <div class="result-section">
+                    <h3><span class="icon">📝</span> Transcription</h3>
+                    <div class="result-text" id="transcriptionText"></div>
+                    <div class="btn-group">
+                        <button class="copy-btn" onclick="copyText('transcriptionText')">📋 Copy</button>
+                    </div>
+                </div>
+
+                <div class="result-section" id="summarySection" style="display: none;">
+                    <h3><span class="icon">📋</span> Summary</h3>
+                    <div class="result-text" id="summaryText"></div>
+                    <div class="btn-group">
+                        <button class="copy-btn" onclick="copyText('summaryText')">📋 Copy</button>
+                    </div>
+                </div>
+
+                <div class="download-section">
+                    <h3><span class="icon">💾</span> Save Files</h3>
+                    <div class="download-buttons">
+                        <button class="download-btn" id="downloadTextBtn" onclick="downloadText()">
+                            📄 Download Transcript (.txt)
+                        </button>
+                        <button class="download-btn" id="downloadAudioBtn" style="display: none;">
+                            🎵 Download Audio (.mp3)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            Powered by Google Gemini AI
+        </footer>
+    </div>
+
+    <script>
+        const form = document.getElementById('transcribeForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const saveAudioBtn = document.getElementById('saveAudioBtn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const result = document.getElementById('result');
+        const audioResult = document.getElementById('audioResult');
+        const progressStatus = document.getElementById('progressStatus');
+        const modelSelect = document.getElementById('modelSelect');
+        
+        let currentVideoTitle = '';
+        let currentTranscription = '';
+        let currentSummary = '';
+        let audioDownloadUrl = null;
+        let audioOnlyDownloadUrl = null;
+
+        // Model display names
+        const modelNames = {
+            'gemini-2.5-flash': 'Gemini 2.5 Flash',
+            'gemini-2.5-pro': 'Gemini 2.5 Pro',
+            'gemini-3-pro-preview': 'Gemini 3 Pro Preview'
+        };
+
+        // Progress messages for transcription
+        const progressMessagesTranscribe = [
+            'Downloading video audio...',
+            'Processing audio file...',
+            'Uploading to Gemini...',
+            'Transcribing with AI...',
+            'Almost done...'
+        ];
+
+        // Progress messages for audio only
+        const progressMessagesAudio = [
+            'Downloading video audio...',
+            'Converting to MP3...',
+            'Preparing download...'
+        ];
+
+        let progressMessages = progressMessagesTranscribe;
+        let progressIndex = 0;
+        let progressInterval = null;
+
+        function startProgress(isAudioOnly = false) {
+            progressIndex = 0;
+            progressMessages = isAudioOnly ? progressMessagesAudio : progressMessagesTranscribe;
+            progressStatus.textContent = progressMessages[0];
+            const interval = isAudioOnly ? 5000 : 15000;
+            progressInterval = setInterval(() => {
+                progressIndex = Math.min(progressIndex + 1, progressMessages.length - 1);
+                progressStatus.textContent = progressMessages[progressIndex];
+            }, interval);
+        }
+
+        function stopProgress() {
+            if (progressInterval) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+            }
+        }
+
+        function formatDuration(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            if (mins >= 60) {
+                const hours = Math.floor(mins / 60);
+                const remainingMins = mins % 60;
+                return `${hours}h ${remainingMins}m ${secs}s`;
+            }
+            return `${mins}m ${secs}s`;
+        }
+
+        function formatCost(cost) {
+            if (cost < 0.01) {
+                return `$${cost.toFixed(4)}`;
+            }
+            return `$${cost.toFixed(2)}`;
+        }
+
+        // Handle transcription
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await processRequest(true);
+        });
+
+        // Handle audio only download
+        saveAudioBtn.addEventListener('click', async () => {
+            await processRequest(false);
+        });
+
+        async function processRequest(transcribe = true) {
+            const youtubeUrl = document.getElementById('youtubeUrl').value.trim();
+            const generateSummary = document.getElementById('generateSummary').checked;
+            const selectedModel = modelSelect.value;
+
+            if (!youtubeUrl) {
+                showError('Please enter a YouTube URL');
+                return;
+            }
+
+            // Reset UI
+            error.classList.remove('active');
+            result.classList.remove('active');
+            audioResult.classList.remove('active');
+            loading.classList.add('active');
+            submitBtn.disabled = true;
+            saveAudioBtn.disabled = true;
+            startProgress(!transcribe);
+            
+            // Clean up previous audio URLs
+            if (audioDownloadUrl) {
+                URL.revokeObjectURL(audioDownloadUrl);
+                audioDownloadUrl = null;
+            }
+            if (audioOnlyDownloadUrl) {
+                URL.revokeObjectURL(audioOnlyDownloadUrl);
+                audioOnlyDownloadUrl = null;
+            }
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 600000);
+
+                const endpoint = transcribe ? '/transcribe' : '/download-audio';
+                const body = transcribe 
+                    ? {
+                        youtube_url: youtubeUrl,
+                        generate_summary: generateSummary,
+                        save_audio: true,
+                        model: selectedModel
+                    }
+                    : {
+                        youtube_url: youtubeUrl
+                    };
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(body),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    let errorMessage;
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        errorMessage = errorJson.error || `Server error: ${response.status}`;
+                    } catch {
+                        errorMessage = errorText || `Server error: ${response.status}`;
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Operation failed');
+                }
+
+                if (transcribe) {
+                    // Handle transcription results
+                    currentVideoTitle = data.video_title;
+                    currentTranscription = data.transcription;
+                    currentSummary = data.summary || '';
+
+                    document.getElementById('videoTitle').textContent = `📹 ${data.video_title}`;
+                    document.getElementById('transcriptionText').textContent = data.transcription;
+
+                    // Display model used
+                    const modelUsed = data.model_used || selectedModel;
+                    document.getElementById('modelUsed').textContent = modelNames[modelUsed] || modelUsed;
+
+                    // Display duration and cost
+                    if (data.audio_duration_seconds) {
+                        document.getElementById('audioDuration').textContent = formatDuration(data.audio_duration_seconds);
+                    } else {
+                        document.getElementById('audioDuration').textContent = '-';
+                    }
+
+                    if (data.estimated_cost !== undefined) {
+                        document.getElementById('estimatedCost').textContent = formatCost(data.estimated_cost);
+                    } else {
+                        document.getElementById('estimatedCost').textContent = '-';
+                    }
+
+                    if (data.summary) {
+                        document.getElementById('summaryText').textContent = data.summary;
+                        document.getElementById('summarySection').style.display = 'block';
+                    } else {
+                        document.getElementById('summarySection').style.display = 'none';
+                    }
+
+                    // Handle audio download button
+                    const downloadAudioBtn = document.getElementById('downloadAudioBtn');
+                    if (data.audio_base64) {
+                        const audioBlob = base64ToBlob(data.audio_base64, 'audio/mpeg');
+                        audioDownloadUrl = URL.createObjectURL(audioBlob);
+                        downloadAudioBtn.onclick = () => {
+                            const a = document.createElement('a');
+                            a.href = audioDownloadUrl;
+                            a.download = `${currentVideoTitle}.mp3`;
+                            a.click();
+                        };
+                        downloadAudioBtn.style.display = 'inline-block';
+                    } else {
+                        downloadAudioBtn.style.display = 'none';
+                    }
+
+                    result.classList.add('active');
+                } else {
+                    // Handle audio only download
+                    document.getElementById('audioVideoTitle').textContent = `📹 ${data.video_title}`;
+                    
+                    if (data.audio_base64) {
+                        const audioBlob = base64ToBlob(data.audio_base64, 'audio/mpeg');
+                        audioOnlyDownloadUrl = URL.createObjectURL(audioBlob);
+                        const audioOnlyDownloadBtn = document.getElementById('audioOnlyDownloadBtn');
+                        audioOnlyDownloadBtn.onclick = () => {
+                            const a = document.createElement('a');
+                            a.href = audioOnlyDownloadUrl;
+                            a.download = `${data.video_title}.mp3`;
+                            a.click();
+                        };
+                    }
+                    
+                    audioResult.classList.add('active');
+                }
+
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    showError('Request timed out. The video might be too long. Try a shorter video.');
+                } else if (err.message === 'Failed to fetch') {
+                    showError('Connection error. Please check:\n1. The server is running (python app.py)\n2. Your internet connection\n3. The server console for errors');
+                } else {
+                    showError(err.message);
+                }
+            } finally {
+                stopProgress();
+                loading.classList.remove('active');
+                submitBtn.disabled = false;
+                saveAudioBtn.disabled = false;
+            }
+        }
+
+        function base64ToBlob(base64, mimeType) {
+            const byteCharacters = atob(base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            return new Blob([byteArray], { type: mimeType });
+        }
+
+        function showError(message) {
+            error.textContent = message;
+            error.classList.add('active');
+        }
+
+        function copyText(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+
+        function downloadText() {
+            let content = `TRANSCRIPTION: ${currentVideoTitle}\n`;
+            content += `${'='.repeat(50)}\n\n`;
+            content += currentTranscription;
+            
+            if (currentSummary) {
+                content += `\n\n${'='.repeat(50)}\n`;
+                content += `SUMMARY\n${'='.repeat(50)}\n\n`;
+                content += currentSummary;
+            }
+            
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentVideoTitle}_transcript.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
